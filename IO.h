@@ -12,6 +12,12 @@
 #include "xc.h"
 #include "stdint.h"
 
+
+
+
+#define STATUS_LED_TRIS TRISBbits.TRISB1
+#define STATUS_LED      PORTBbits.RB1
+
 #define STATE_INIT  0
 #define STATE_WAIT  1
 #define STATE_BLINK 2

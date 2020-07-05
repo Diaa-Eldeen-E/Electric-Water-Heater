@@ -13,9 +13,8 @@ extern led_t onLed;
 extern button_t onButton;
 
 void ledInit(void) {
-    TRISBbits.TRISB1 = 0; // output
-    TRISBbits.TRISB2 = 0; // output
-    PORTBbits.RB1 = 0;
+    STATUS_LED_TRIS = 0; // output
+    STATUS_LED = 0;
     onLed.state = STATE_INIT;
     onLed.timerFlag = 0;
 }
