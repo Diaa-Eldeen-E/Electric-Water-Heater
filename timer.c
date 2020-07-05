@@ -19,7 +19,7 @@ uint8_t flag100MS;
 extern led_t onLed;
 
 
-void TMR0_Initialize() {
+void TMR0_Initialize(void) {
     // Set TMR0 to the options selected in the User Interface
 
     // PSA assigned; PS 1:8,  mask the nWPUEN and INTEDG bits
@@ -32,12 +32,13 @@ void TMR0_Initialize() {
     // Clear Interrupt flag before enabling the interrupt
     INTCONbits.TMR0IF = 0;
 
-    // Enabling TMR0 interrupt
+    // Enable TMR0 interrupt
     INTCONbits.TMR0IE = 1;
 }
 
 
-void TMR0_ISR() {
+// A timer interrupt counts ms
+void TMR0_ISR(void) {
 
     // Clear the TMR0 interrupt flag
     INTCONbits.TMR0IF = 0;

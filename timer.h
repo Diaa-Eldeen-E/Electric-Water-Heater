@@ -11,18 +11,16 @@
 #include "xc.h"
 #include "stdint.h"
 
+#include "IO.h"
+
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-typedef struct led_t {
-    uint8_t state;
-    volatile uint8_t timerFlag;
-} led_t;
 
-void TMR0_Initialize();
-void TMR0_ISR();
+void TMR0_Initialize(void);
+void TMR0_ISR(void);
 
 #ifdef	__cplusplus
 }
