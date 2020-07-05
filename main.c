@@ -22,6 +22,8 @@
 
 #include "timer.h"
 #include "IO.h"
+#include "SSD.h"
+
 
 //volatile uint8_t ms = 0; // Count ms
 //volatile uint8_t ms100 = 0; // Count quarter seconds
@@ -46,6 +48,15 @@ void turnOff(void) {
     
 }
 
+
+
+
+
+// ADC read temp
+// temp adjustment buttons
+// heating element
+// cooling element
+
 void main(void) {
 
 
@@ -55,8 +66,12 @@ void main(void) {
     TMR0_Initialize();
     ledInit();
     buttonsInit();
+    SSD_init();
     INTCONbits.GIE = 1;
 
+    
+    
+    uint8_t i=0;
     while (1) {
 
         if (onButton.state) {
@@ -75,13 +90,20 @@ void main(void) {
                     break;
 
                 case STATE_BLINK:
-                    PORTBbits.RB1 ^= 1;
+                    STATUS_LED ^= 1;
+//                    SSD1 = 1;
+//                    if(i == 10) i = 0;
+                    i++;
+//                    SSD1 ^= 1;
+//                    SSD2 ^= 1;
                     onLed.state = STATE_WAIT;
                     break;
 
                 default:
                     break;
+                    
             }
+            SSD_multiplex(i);
         }
         // The button is off, go to sleep
         else {
