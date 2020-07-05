@@ -21,30 +21,30 @@
 #include <stdint.h>
 
 #include "timer.h"
+#include "IO.h"
 
 //volatile uint8_t ms = 0; // Count ms
 //volatile uint8_t ms100 = 0; // Count quarter seconds
 //uint8_t timer0ReloadVal;
 
-
-#define STATE_INIT  0
-#define STATE_WAIT  1
-#define STATE_BLINK 2
-
-
-
 led_t onLed;
-
-
-
-void ledInit() {
-    TRISB = 0x00; // all pints output
-    PORTB = 0;
-    onLed.state = STATE_INIT;
-    onLed.timerFlag = 0;
-}
+button_t onButton;
 
 void TMR0_ISR();
+
+void turnOff(void) {
+    
+    PORTB = 0;
+    PORTC = 0;
+    PORTA = 0;
+    PORTD = 0;
+    PORTE = 0;
+    
+    //stop the fan
+    
+    SLEEP();
+    
+}
 
 void main(void) {
 
@@ -54,32 +54,39 @@ void main(void) {
 
     TMR0_Initialize();
     ledInit();
+    buttonsInit();
     INTCONbits.GIE = 1;
 
     while (1) {
 
-        switch (onLed.state) {
+        if (onButton.state) {
+            
+            switch (onLed.state) {
 
-            case STATE_INIT:
-                onLed.state = STATE_WAIT;
-                break;
+                case STATE_INIT:
+                    onLed.state = STATE_WAIT;
+                    break;
 
-            case STATE_WAIT:
-                if (onLed.timerFlag) {
-                    onLed.state = STATE_BLINK;
-                    onLed.timerFlag = 0;
-                }
-                break;
+                case STATE_WAIT:
+                    if (onLed.timerFlag) {
+                        onLed.state = STATE_BLINK;
+                        onLed.timerFlag = 0;
+                    }
+                    break;
 
-            case STATE_BLINK:
-                PORTBbits.RB1 ^= 1;
-                onLed.state = STATE_WAIT;
-                break;
-                
-            default:
-                break;
+                case STATE_BLINK:
+                    PORTBbits.RB1 ^= 1;
+                    onLed.state = STATE_WAIT;
+                    break;
+
+                default:
+                    break;
+            }
         }
-        
+        // The button is off, go to sleep
+        else {
+            turnOff();
+        }
         
     }
 
@@ -90,14 +97,15 @@ void main(void) {
 
 // On/Off button interrupt and debouncing
 
-// A timer interrupt counts ms
-//Timer0
-//Prescaler 1:8; TMR0 Preload = 6; Actual Interrupt Time : 1 ms
+
 
 void __interrupt() INTERRUPT_InterruptManager(void) {
 
     if (INTCONbits.TMR0IF) {
         TMR0_ISR();
+    }
+    if (INTCONbits.INTF) {
+        INTB0_ISR();
     }
 }
 
