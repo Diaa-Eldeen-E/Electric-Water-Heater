@@ -22,8 +22,8 @@ extern led_t onLed;
 void TMR0_Initialize(void) {
     // Set TMR0 to the options selected in the User Interface
 
-    // PSA assigned; PS 1:8,  mask the nWPUEN and INTEDG bits
-    OPTION_REG = (uint8_t) ((OPTION_REG & 0xC0) | (0x02 & 0x3F));
+    // PSA assigned; PS 1:16,  mask the nWPUEN and INTEDG bits
+    OPTION_REG = (uint8_t) ((OPTION_REG & 0xC0) | (0x03 & 0x3F));
 
     // Load the TMR value to reload variable
     TMR0 = 0x6;
