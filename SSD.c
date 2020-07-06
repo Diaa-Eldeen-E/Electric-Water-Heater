@@ -14,11 +14,13 @@ const unsigned char SEGMENT_MAP[10] = {0x3F,0x06,0x5B,0x4F,0x66,
                                     0x6D,0x7D,0x07,0x7F,0x6F};
 
 extern volatile uint8_t ms;
-int8_t prevTime;
-uint8_t state;
+int8_t prevTime;    // Used to count the SSD multiplexing delay time
+uint8_t state;  // Used to indicate which SSD is on
 
-// 7-segment driver and multiplexing
+
+// print a digit number in the SSD port
 void SSD_print(uint8_t digit) {
+    ASSERT(digit <= 9);
     SSD = SEGMENT_MAP[digit];
 }
 
@@ -35,7 +37,10 @@ void SSD_init(void) {
     SSD_M = 0;
 }
 
+
+// Multiplex 2 SSDs for displaying 2 digit number
 void SSD_multiplex(uint8_t num) {
+    ASSERT(num <= 99);
    if((int8_t)ms - prevTime >= 10) {
        // Switch segments
        if(state == STATE_MSD) {
