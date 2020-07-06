@@ -24,7 +24,7 @@ void stateMachine_heater(uint8_t tempAvg){
 
             else {
                 // blink LED state
-                onLed.state = STATE_BLINK;
+                ledState = STATE_BLINK;
 
                 // turn on heat
                 HEATING_ELEMNT_TURN_ON();
@@ -39,7 +39,7 @@ void stateMachine_heater(uint8_t tempAvg){
                 heaterState = STATE_HEATING;
             else {
                 // LED on
-                onLed.state = STATE_ON;
+                ledState = STATE_ON;
 
                 // turn off heat
                 HEATING_ELEMNT_TURN_OFF();
