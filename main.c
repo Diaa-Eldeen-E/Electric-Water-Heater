@@ -15,16 +15,15 @@
 #include "IO.h"
 #include "SSD.h"
 #include "ADC.h"
+#include "stateMachines.h"
 
 
 //volatile uint8_t ms = 0; // Count ms
 //volatile uint8_t ms100 = 0; // Count quarter seconds
-//uint8_t timer0ReloadVal;
 
 led_t onLed;
 button_t onButton;
 
-void TMR0_ISR();
 
 void turnOff(void) {
 
@@ -40,18 +39,10 @@ void turnOff(void) {
 
 }
 
-#define HEATING_ELEMENT PORTCbits.RC5
-#define COOLING_ELEMENT PORTCbits.RC2
 
-#define HEATING_ELEMNT_TURN_ON()    PORTCbits.RC5 = 1
-#define HEATING_ELEMNT_TURN_OFF()   PORTCbits.RC5 = 0
-
-#define COOLING_ELEMENT_TURN_ON()   PORTCbits.RC2 = 1
-#define COOLING_ELEMENT_TURN_OFF()  PORTCbits.RC2 = 0
 
 extern volatile uint8_t flag100MS;
 extern volatile uint8_t flag5Sec;
-extern volatile uint8_t flag500MS1;
 extern volatile uint8_t flag500MS2;
 
 // ADC read temp
@@ -63,8 +54,7 @@ extern volatile uint8_t flag500MS2;
 // temp adjustment buttons
 
 
-#define STATE_HEATING   0
-#define STATE_COOLING   1
+uint8_t tempSet = 60;
 
 void main(void) {
 
@@ -87,39 +77,12 @@ void main(void) {
     uint8_t tempAvg =0;
     uint8_t tempCur =0;
     
-    uint8_t tempSet = 60;
-    
-    uint8_t heaterState = 0;
     
     while (1) {
 
         if (onButton.state) {
 
-            switch (onLed.state) {
-
-                case STATE_INIT:
-                    onLed.state = STATE_BLINK;
-                    break;
-                    
-                case STATE_ON:
-                    STATUS_LED = 1;
-                    break;
-                    
-                case STATE_OFF:
-                    STATUS_LED = 0;
-                    break;
-
-                case STATE_BLINK:
-                    if (onLed.timerFlag) {
-                        STATUS_LED ^= 1;
-                        onLed.timerFlag = 0;
-                    }
-                    break;
-
-                default:
-                    break;
-
-            }
+            // ADC read temperature periodic routine
             if(flag100MS) {
                 tempAccum -= tempVals[idx];
                 tempCur = ADC_readTemp();
@@ -135,41 +98,9 @@ void main(void) {
                 
                 flag100MS = 0;
             }
-            switch(heaterState) {
-                case STATE_HEATING:
-                    if(tempAvg >= tempSet + 5)
-                        heaterState = STATE_COOLING;
-                    
-                    else {
-                        // blink LED state
-                        onLed.state = STATE_BLINK;
-
-                        // turn on heat
-                        HEATING_ELEMNT_TURN_ON();
-
-                        // turn off cool
-                        COOLING_ELEMENT_TURN_OFF();
-                    }
-                    break;
-                    
-                case STATE_COOLING:
-                    if(tempAvg <= tempSet - 5)
-                        heaterState = STATE_HEATING;
-                    else {
-                        // LED on
-                        onLed.state = STATE_ON;
-
-                        // turn off heat
-                        HEATING_ELEMNT_TURN_OFF();
-
-                        // turn on cool
-                        COOLING_ELEMENT_TURN_ON();
-                    }
-                    break;
-                    
-                default:
-                    break;
-            }
+            
+            stateMachine_heater(tempAvg);
+            stateMachine_LED();
           
             SSD_multiplex(tempCur);
         }// The button is off, go to sleep
