@@ -49,7 +49,10 @@ void turnOff(void) {
 #define COOLING_ELEMENT_TURN_ON()   PORTCbits.RC2 = 1
 #define COOLING_ELEMENT_TURN_OFF()  PORTCbits.RC2 = 0
 
-extern uint8_t flag100MS;
+extern volatile uint8_t flag100MS;
+extern volatile uint8_t flag5Sec;
+extern volatile uint8_t flag500MS1;
+extern volatile uint8_t flag500MS2;
 
 // ADC read temp
     // Make an array, get the average of last 10 reads
@@ -82,6 +85,7 @@ void main(void) {
     uint16_t tempAccum = 0;
     uint8_t idx = 0;
     uint8_t tempAvg =0;
+    uint8_t tempCur =0;
     
     uint8_t tempSet = 60;
     
@@ -118,8 +122,9 @@ void main(void) {
             }
             if(flag100MS) {
                 tempAccum -= tempVals[idx];
-                tempVals[idx] = ADC_readTemp();
-                tempAccum += tempVals[idx];
+                tempCur = ADC_readTemp();
+                tempVals[idx] = tempCur;
+                tempAccum += tempCur;
                 
                 tempAvg = tempAccum / 10;
                 
@@ -166,7 +171,7 @@ void main(void) {
                     break;
             }
           
-            SSD_multiplex(tempAvg);
+            SSD_multiplex(tempCur);
         }// The button is off, go to sleep
         else {
             turnOff();
