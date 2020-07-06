@@ -6,23 +6,15 @@
  */
 
 
-// PIC16F877A Configuration Bit Settings
-#pragma config FOSC = HS        // Oscillator Selection bits (HS oscillator)
-#pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled)
-#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
-#pragma config BOREN = OFF      // Brown-out Reset Enable bit (BOR disabled)
-#pragma config LVP = OFF        // Low-Voltage (Single-Supply) In-Circuit Serial Programming Enable bit (RB3 is digital I/O, HV on MCLR must be used for programming)
-#pragma config CPD = OFF        // Data EEPROM Memory Code Protection bit (Data EEPROM code protection off)
-#pragma config WRT = OFF        // Flash Program Memory Write Enable bits (Write protection off; all program memory may be written to by EECON control)
-#pragma config CP = OFF         // Flash Program Memory Code Protection bit (Code protection off)
-
-
+#include "device_config.h"
 #include <xc.h>
 #include <stdint.h>
+
 
 #include "timer.h"
 #include "IO.h"
 #include "SSD.h"
+#include "ADC.h"
 
 
 //volatile uint8_t ms = 0; // Count ms
@@ -35,27 +27,41 @@ button_t onButton;
 void TMR0_ISR();
 
 void turnOff(void) {
-    
+
     PORTB = 0;
     PORTC = 0;
     PORTA = 0;
     PORTD = 0;
     PORTE = 0;
-    
+
     //stop the fan
-    
+
     SLEEP();
-    
+
 }
 
+#define HEATING_ELEMENT PORTCbits.RC5
+#define COOLING_ELEMENT PORTCbits.RC2
 
+#define HEATING_ELEMNT_TURN_ON()    PORTCbits.RC5 = 1
+#define HEATING_ELEMNT_TURN_OFF()   PORTCbits.RC5 = 0
 
+#define COOLING_ELEMENT_TURN_ON()   PORTCbits.RC2 = 1
+#define COOLING_ELEMENT_TURN_OFF()  PORTCbits.RC2 = 0
 
+extern uint8_t flag100MS;
 
 // ADC read temp
-// temp adjustment buttons
+    // Make an array, get the average of last 10 reads
+
 // heating element
 // cooling element
+
+// temp adjustment buttons
+
+
+#define STATE_HEATING   0
+#define STATE_COOLING   1
 
 void main(void) {
 
@@ -64,52 +70,108 @@ void main(void) {
     // Use the ticks time to drive timed behavior
 
     TMR0_Initialize();
+    ADC_initialize();
     ledInit();
     buttonsInit();
     SSD_init();
     INTCONbits.GIE = 1;
 
+    TRISC = 0;
+
+    uint8_t tempVals[10] = {0};
+    uint16_t tempAccum = 0;
+    uint8_t idx = 0;
+    uint8_t tempAvg =0;
     
+    uint8_t tempSet = 60;
     
-    uint8_t i=0;
+    uint8_t heaterState = 0;
+    
     while (1) {
 
         if (onButton.state) {
-            
+
             switch (onLed.state) {
 
                 case STATE_INIT:
-                    onLed.state = STATE_WAIT;
+                    onLed.state = STATE_BLINK;
+                    break;
+                    
+                case STATE_ON:
+                    STATUS_LED = 1;
+                    break;
+                    
+                case STATE_OFF:
+                    STATUS_LED = 0;
                     break;
 
-                case STATE_WAIT:
+                case STATE_BLINK:
                     if (onLed.timerFlag) {
-                        onLed.state = STATE_BLINK;
+                        STATUS_LED ^= 1;
                         onLed.timerFlag = 0;
                     }
                     break;
 
-                case STATE_BLINK:
-                    STATUS_LED ^= 1;
-//                    SSD1 = 1;
-//                    if(i == 10) i = 0;
-                    i++;
-//                    SSD1 ^= 1;
-//                    SSD2 ^= 1;
-                    onLed.state = STATE_WAIT;
-                    break;
-
                 default:
                     break;
-                    
+
             }
-            SSD_multiplex(i);
-        }
-        // The button is off, go to sleep
+            if(flag100MS) {
+                tempAccum -= tempVals[idx];
+                tempVals[idx] = ADC_readTemp();
+                tempAccum += tempVals[idx];
+                
+                tempAvg = tempAccum / 10;
+                
+                if(idx < 9)
+                    idx++;
+                else
+                    idx = 0;
+                
+                flag100MS = 0;
+            }
+            switch(heaterState) {
+                case STATE_HEATING:
+                    if(tempAvg >= tempSet + 5)
+                        heaterState = STATE_COOLING;
+                    
+                    else {
+                        // blink LED state
+                        onLed.state = STATE_BLINK;
+
+                        // turn on heat
+                        HEATING_ELEMNT_TURN_ON();
+
+                        // turn off cool
+                        COOLING_ELEMENT_TURN_OFF();
+                    }
+                    break;
+                    
+                case STATE_COOLING:
+                    if(tempAvg <= tempSet - 5)
+                        heaterState = STATE_HEATING;
+                    else {
+                        // LED on
+                        onLed.state = STATE_ON;
+
+                        // turn off heat
+                        HEATING_ELEMNT_TURN_OFF();
+
+                        // turn on cool
+                        COOLING_ELEMENT_TURN_ON();
+                    }
+                    break;
+                    
+                default:
+                    break;
+            }
+          
+            SSD_multiplex(tempAvg);
+        }// The button is off, go to sleep
         else {
             turnOff();
         }
-        
+
     }
 
     return;
@@ -118,8 +180,6 @@ void main(void) {
 // Use microChip youtube video as reference for debouncing
 
 // On/Off button interrupt and debouncing
-
-
 
 void __interrupt() INTERRUPT_InterruptManager(void) {
 
