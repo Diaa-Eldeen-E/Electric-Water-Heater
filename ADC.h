@@ -25,10 +25,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 #ifdef __cplusplus  // Provide C++ Compatibility
-
-    extern "C" {
-
+extern "C" {
 #endif
 
 #define ADC_CHANNEL 2
@@ -217,9 +216,7 @@ uint8_t ADC_readTemp(void);
 
 
 #ifdef __cplusplus  // Provide C++ Compatibility
-
     }
-
 #endif
 
 #endif	//ADC_H
