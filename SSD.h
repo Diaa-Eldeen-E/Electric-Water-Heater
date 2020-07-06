@@ -16,12 +16,12 @@
 
 #define SSD_TRIS    TRISD
 #define SSD         PORTD
-#define SSD_L    PORTAbits.RA2
-#define SSD_M    PORTAbits.RA3
+#define SSD_L    PORTAbits.RA4
+#define SSD_M    PORTAbits.RA5
 
 #define SSD_CONTROL_TRIS    TRISA
 #define SSD_CONTROL PORTA
-#define SSD_CONTROL_BITS    (_PORTA_RA2_MASK | _PORTA_RA3_MASK)
+#define SSD_CONTROL_BITS    (_PORTA_RA4_MASK | _PORTA_RA5_MASK)
 
 #define STATE_MSD   10
 #define STATE_LSD   11
