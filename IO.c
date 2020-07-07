@@ -30,8 +30,8 @@ void buttonsInit(void) {
 //    PORTB = 0x7;   // Pull up
     
     onButton.state = 0; // Start with off state
-    upButton.state = STATE_HIGH;
-    downButton.state = STATE_HIGH;
+    upButton.state = STATE_RELEASED;
+    downButton.state = STATE_RELEASED;
     
     // Clear Interrupt flag before enabling the interrupt
     INTCONbits.INTF = 0;
