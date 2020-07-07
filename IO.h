@@ -25,9 +25,15 @@ extern "C" {
 #define STATUS_LED      PORTBbits.RB3
 
 #define DOWN_BUTTON PORTBbits.RB1
+#define DOWN_BUTTON_IS_PRESSED()  (DOWN_BUTTON == 0)
+#define DOWN_BUTTON_IS_RELEASED()  (DOWN_BUTTON == 1)
+
 #define UP_BUTTON   PORTBbits.RB2
+#define UP_BUTTON_IS_PRESSED()  (UP_BUTTON == 0)
+#define UP_BUTTON_IS_RELEASED()  (UP_BUTTON == 1)
 
-
+#define DEBOUNCING_DELAY_MS   50
+    
 #define HEATING_ELEMENT PORTCbits.RC5
 #define COOLING_ELEMENT PORTCbits.RC2
 
@@ -37,25 +43,31 @@ extern "C" {
 #define COOLING_ELEMENT_TURN_ON()   PORTCbits.RC2 = 1
 #define COOLING_ELEMENT_TURN_OFF()  PORTCbits.RC2 = 0
 
+    // LED states
+#define STATE_INIT  0
+#define STATE_ON    1
+#define STATE_OFF   2
+#define STATE_BLINK 3
 
-#define STATE_LOW   0
-#define STATE_HIGH  1
+    // Button states
+#define STATE_PRESSED   0
+#define STATE_RELEASED  1
 #define STATE_DEBOUNCE  2
 
-typedef struct led_t {
-    uint8_t state;
-    volatile uint8_t timerFlag;
-} led_t;
+    typedef struct led_t {
+        uint8_t state;
+        volatile uint8_t timerFlag;
+    } led_t;
 
-typedef struct button_t {
-    uint8_t state;
-    uint8_t prevState;
-    volatile uint8_t timer;
-} button_t;
+    typedef struct button_t {
+        uint8_t state;
+        uint8_t prevState;
+        volatile uint8_t timer;
+    } button_t;
 
-void ledInit(void);
-void buttonsInit(void);
-void INTB0_ISR(void);
+    void ledInit(void);
+    void buttonsInit(void);
+    void INTB0_ISR(void);
 
 
 #ifdef __cplusplus  // Provide C++ Compatibility
