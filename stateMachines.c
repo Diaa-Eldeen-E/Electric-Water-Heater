@@ -46,6 +46,7 @@ void stateMachine_heater(uint8_t tempAvg) {
             break;
 
         default:
+            ASSERT(0);
             break;
     }
 
@@ -80,10 +81,15 @@ void SSD_task(uint8_t tempCur, uint8_t tempSetVar) {
                         flag500MS2 = 0;
                     }
                     break;
+                    
+                default:
+                    ASSERT(0);
+                    break;
             }
             break;
 
         default:
+            ASSERT(0);
             break;
     }
 }
@@ -112,6 +118,7 @@ void stateMachine_LED(void) {
             break;
 
         default:
+            ASSERT(0);
             break;
 
     }
@@ -162,6 +169,7 @@ int8_t buttonsUpDown_Task(void) {
             break;
 
         default:
+            ASSERT(0);
             break;
     }
 
@@ -205,6 +213,7 @@ int8_t buttonsUpDown_Task(void) {
             break;
 
         default:
+            ASSERT(0);
             break;
     }
 
