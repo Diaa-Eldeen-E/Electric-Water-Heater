@@ -34,14 +34,7 @@ extern "C" {
 
 #define DEBOUNCING_DELAY_MS   50
     
-#define HEATING_ELEMENT PORTCbits.RC5
-#define COOLING_ELEMENT PORTCbits.RC2
 
-#define HEATING_ELEMNT_TURN_ON()    PORTCbits.RC5 = 1
-#define HEATING_ELEMNT_TURN_OFF()   PORTCbits.RC5 = 0
-
-#define COOLING_ELEMENT_TURN_ON()   PORTCbits.RC2 = 1
-#define COOLING_ELEMENT_TURN_OFF()  PORTCbits.RC2 = 0
 
     // LED states
 #define STATE_INIT  0
