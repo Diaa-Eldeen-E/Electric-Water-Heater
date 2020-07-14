@@ -12,32 +12,27 @@ extern volatile uint8_t flag500MS1;
 extern volatile uint8_t flag500MS2;
 extern volatile uint8_t buttonsTimer;
 
-uint8_t ledState = STATE_INIT;
-uint8_t heaterState = STATE_HEATING;
+static uint8_t ledState = STATE_INIT;
+static uint8_t heaterState = STATE_HEATING;
+static uint8_t SSDState = STATE_TEMP_DISPLAY;
+
 extern uint8_t tempSet;
 
-uint8_t SSDState = STATE_TEMP_DISPLAY;
+
 
 button_t upButton;
 button_t downButton;
 
 void stateMachine_heater(uint8_t tempAvg) {
 
-
     switch (heaterState) {
+
         case STATE_HEATING:
             if (tempAvg >= tempSet + 5)
                 heaterState = STATE_COOLING;
-
             else {
-                // blink LED state
+                Heater_TurnOn();
                 ledState = STATE_BLINK;
-
-                // turn on heat
-                HEATING_ELEMNT_TURN_ON();
-
-                // turn off cool
-                COOLING_ELEMENT_TURN_OFF();
             }
             break;
 
@@ -45,14 +40,8 @@ void stateMachine_heater(uint8_t tempAvg) {
             if (tempAvg <= tempSet - 5)
                 heaterState = STATE_HEATING;
             else {
-                // LED on
+                Heater_TurnOff();
                 ledState = STATE_ON;
-
-                // turn off heat
-                HEATING_ELEMNT_TURN_OFF();
-
-                // turn on cool
-                COOLING_ELEMENT_TURN_ON();
             }
             break;
 
@@ -64,36 +53,39 @@ void stateMachine_heater(uint8_t tempAvg) {
 
 void SSD_task(uint8_t tempCur, uint8_t tempSetVar) {
 
+    static uint8_t blinkState = STATE_SHOW; // Nested state inside STATE_TEMP_SET
+
     switch (SSDState) {
 
         case STATE_TEMP_DISPLAY:
-            SSD_multiplex(tempCur);
+            SSD_multiplex(tempCur); // Display the ADC temperature reading
             break;
 
         case STATE_TEMP_SET:
-            SSDState = STATE_SHOW;
-            break;
+            // Blink the seven segment display
+            switch (blinkState) {
+                case STATE_SHOW:
+                    if (flag500MS2) {
+                        blinkState = STATE_HIDE;
+                        SSD = 0;
+                        flag500MS2 = 0;
+                    } 
+                    else
+                        SSD_multiplex(tempSetVar);
+                    break;
 
-        case STATE_SHOW:
-            if (flag500MS2) {
-                SSDState = STATE_HIDE;
-                flag500MS2 = 0;
+                case STATE_HIDE:
+                    if (flag500MS2) {
+                        blinkState = STATE_SHOW;
+                        flag500MS2 = 0;
+                    }
+                    break;
             }
-            SSD_multiplex(tempSetVar);
-            break;
-
-        case STATE_HIDE:
-            if (flag500MS2) {
-                SSDState = STATE_SHOW;
-                flag500MS2 = 0;
-            }
-            SSD = 0;
             break;
 
         default:
             break;
     }
-
 }
 
 void stateMachine_LED(void) {
@@ -126,10 +118,10 @@ void stateMachine_LED(void) {
 
 }
 
-int8_t buttonsUpDown_Task() {
+int8_t buttonsUpDown_Task(void) {
 
-    static int8_t tempSetDiff = 0;  // Holds the update amount of tempSet value
-    
+    static int8_t tempSetDiff = 0; // Holds the update amount of tempSet value
+
     // Up button task
     switch (upButton.state) {
         case STATE_RELEASED:
@@ -145,9 +137,9 @@ int8_t buttonsUpDown_Task() {
             if (upButton.state != upButton.prevState) {
                 if (SSDState == STATE_TEMP_DISPLAY)
                     SSDState = STATE_TEMP_SET;
-                else 
+                else
                     if (tempSet + tempSetDiff < 75)
-                        tempSetDiff += 5;
+                    tempSetDiff += 5;
             }
             if (UP_BUTTON_IS_RELEASED()) {
                 upButton.timer = 0;
@@ -160,7 +152,7 @@ int8_t buttonsUpDown_Task() {
 
         case STATE_DEBOUNCE:
             if (upButton.timer == DEBOUNCING_DELAY_MS) {
-                
+
                 if (upButton.prevState == STATE_RELEASED)
                     upButton.state = STATE_PRESSED;
                 else
@@ -190,7 +182,7 @@ int8_t buttonsUpDown_Task() {
                     SSDState = STATE_TEMP_SET;
                 else
                     if (tempSet + tempSetDiff > 35)
-                        tempSetDiff -= 5;
+                    tempSetDiff -= 5;
             }
             if (DOWN_BUTTON_IS_RELEASED()) {
                 downButton.state = STATE_DEBOUNCE;
@@ -203,7 +195,7 @@ int8_t buttonsUpDown_Task() {
 
         case STATE_DEBOUNCE:
             if (downButton.timer == DEBOUNCING_DELAY_MS) {
-                
+
                 if (downButton.prevState == STATE_RELEASED)
                     downButton.state = STATE_PRESSED;
                 else
@@ -217,13 +209,13 @@ int8_t buttonsUpDown_Task() {
     }
 
     // Update the tempSet value after 5 seconds from releasing the buttons
-    if (buttonsTimer >= 50) { 
+    if (buttonsTimer >= 50 && SSDState == STATE_TEMP_SET) {
         SSDState = STATE_TEMP_DISPLAY;
         tempSet += tempSetDiff;
         tempSetDiff = 0;
-        EEPROM_writeByte(EEPROM_SET_TEMP_ADDR, tempSet);
+        EEPROM_WriteByte(EEPROM_SET_TEMP_ADDR, tempSet);
         buttonsTimer = 0;
     }
-    
+
     return tempSetDiff;
 }
