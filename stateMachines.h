@@ -12,6 +12,8 @@
 #include "SSD.h"
 #include "EEPROM.h"
 #include "heater.h"
+#include "ADC.h"
+#include "timer.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -49,8 +51,10 @@ typedef enum {
 }ButtonState_t;  
 
 
-
 void StateMachine_Initialize(void);
+void StateMachine_TurnOff(void);
+void StateMachine_OnWakeUp(void);
+void StateMachine_Run(void);
 void StateMachine_Heater(uint8_t tempAvg);
 void StateMachine_SSD(uint8_t tempCur, uint8_t tempSetVar);
 void StateMachine_LED(void);

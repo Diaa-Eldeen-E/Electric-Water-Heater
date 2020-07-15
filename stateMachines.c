@@ -8,10 +8,11 @@
 
 #include "stateMachines.h"
 
-extern uint8_t gTempSet;
+static uint8_t gTempSet;    ///< The desired temperature value
 
-extern volatile uint8_t gFlagSSDBlink;
-extern volatile uint8_t gButtonsTimer;
+extern volatile uint8_t gFlagADCPeriod; ///< ADC reading routine time event
+extern volatile uint8_t gFlagSSDBlink;  ///< SSD blinking time event
+extern volatile uint8_t gButtonsTimer;  ///< 100 milliseconds ticks counter
 
 LED_t heaterLED;
 button_t onButton;
@@ -31,6 +32,88 @@ void StateMachine_Initialize(void) {
     upButton.state = STATE_RELEASED;
     downButton.state = STATE_RELEASED;
 }
+
+void StateMachine_TurnOff(void) {
+    
+    onButton.prevState = STATE_OFF;
+    //    PORTB = 0;
+    PORTC = 0;
+    PORTA = 0;
+    PORTD = 0;
+    PORTE = 0;
+
+    //stop the fan
+
+    SLEEP();
+}
+
+void StateMachine_OnWakeUp(void) {
+    // Read the gTempSet from the EEPROM
+    gTempSet = EEPROM_ReadByte(EEPROM_SET_TEMP_ADDR);
+
+    // Initialize the gTempSet value if not initialized
+    if (gTempSet == 0xff) {
+        gTempSet = 60;
+        EEPROM_WriteByte(EEPROM_SET_TEMP_ADDR, gTempSet);
+    }
+
+    onButton.prevState = 1;
+}
+
+
+void StateMachine_Run(void) {
+    
+    uint8_t tempVals[10] = {0}; // Holds the last 10 temperature readings
+    uint16_t tempAccum = 0; // The summation of the last 10 readings
+    uint8_t idx = 0; // tempVals array index
+    uint8_t tempAvg = 0; // Average of the last 10 readings
+    uint8_t tempCur = 0; // Current temperature reading
+    int8_t tempDiff; // Up/Down buttons temperature difference to be updated
+    
+    while (1) {
+
+        if (onButton.state == STATE_ON) {
+
+            if (onButton.prevState == STATE_OFF) {
+                StateMachine_OnWakeUp();
+            }
+
+            // ADC read temperature periodic routine
+            if (gFlagADCPeriod) {
+
+                // Subtract the tenth read before the current one
+                tempAccum -= tempVals[idx];
+
+                tempCur = ADC_ReadTemp();
+
+                // Add the current read to the previous 9 reads
+                tempAccum += tempCur;
+
+                tempAvg = tempAccum / 10; // Average of 10 reads
+
+                // Save the current temperature read in the array
+                tempVals[idx] = tempCur;
+
+                if (++idx > 9) // Increment array index
+                    idx = 0; // Wrap the array index value on 10
+
+                gFlagADCPeriod = 0;
+            }
+
+            tempDiff = StateMachine_Buttons();
+            StateMachine_Heater(tempAvg);
+            StateMachine_LED();
+            StateMachine_SSD(tempCur, gTempSet + tempDiff);
+        }
+        // The on button is off, turn off the device
+        else {
+            StateMachine_TurnOff();
+        }
+    }
+    
+    ASSERT(0);  // This should never be reached
+}
+
 
 void StateMachine_Heater(uint8_t tempAvg) {
 
