@@ -19,8 +19,8 @@ extern "C" {
 #endif
 
 
-void TMR0_Initialize(void);
-void TMR0_ISR(void);
+void Timer0_Initialize(void);
+void Timer0_ISR(void);
 
 #ifdef	__cplusplus
 }
