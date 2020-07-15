@@ -8,35 +8,36 @@
 
 #include "stateMachines.h"
 
-static uint8_t gTempSet;    ///< The desired temperature value
+static uint8_t g_TempSet;    ///< The desired temperature value
+static uint8_t g_TempSetNew;    ///< The choosen temperature value by buttons
 
-extern volatile uint8_t gFlagADCPeriod; ///< ADC reading routine time event
-extern volatile uint8_t gFlagSSDBlink;  ///< SSD blinking time event
-extern volatile uint8_t gButtonsTimer;  ///< 100 milliseconds ticks counter
+extern volatile uint8_t g_FlagADCPeriod; ///< ADC reading routine time event
+extern volatile uint8_t g_FlagSSDBlink;  ///< SSD blinking time event
+extern volatile uint8_t g_ButtonsTimer;  ///< 100 milliseconds ticks counter
 
-LED_t heaterLED;
-button_t onButton;
-button_t upButton;
-button_t downButton;
+LED_t g_HeaterLED;
+button_t g_OnButton;
+button_t g_UpButton;
+button_t g_DownButton;
 
-static uint8_t heaterState;
-static uint8_t SSDState;
+static uint8_t g_HeaterState;
+static uint8_t g_SSDState;
 
 void StateMachine_Initialize(void) {
 
-    heaterLED.state = STATE_OFF;
-    heaterState = STATE_HEATING;
-    SSDState = STATE_TEMP_DISPLAY;
+    g_HeaterLED.state = STATE_OFF;
+    g_HeaterState = STATE_INIT;
+    g_SSDState = STATE_TEMP_DISPLAY;
 
-    onButton.state = STATE_OFF; // Start the heater device with off state
-    upButton.state = STATE_RELEASED;
-    downButton.state = STATE_RELEASED;
+    g_OnButton.state = STATE_OFF; // Start the heater device with off state
+    g_UpButton.state = STATE_RELEASED;
+    g_DownButton.state = STATE_RELEASED;
 }
 
 void StateMachine_TurnOff(void) {
     
-    onButton.prevState = STATE_OFF;
-    //    PORTB = 0;
+    g_OnButton.prevState = STATE_OFF;
+    PORTB = 0;
     PORTC = 0;
     PORTA = 0;
     PORTD = 0;
@@ -49,15 +50,21 @@ void StateMachine_TurnOff(void) {
 
 void StateMachine_OnWakeUp(void) {
     // Read the gTempSet from the EEPROM
-    gTempSet = EEPROM_ReadByte(EEPROM_SET_TEMP_ADDR);
+    g_TempSet = EEPROM_ReadByte(EEPROM_SET_TEMP_ADDR);
 
     // Initialize the gTempSet value if not initialized
-    if (gTempSet == 0xff) {
-        gTempSet = 60;
-        EEPROM_WriteByte(EEPROM_SET_TEMP_ADDR, gTempSet);
+    if (g_TempSet == 0xff) {
+        g_TempSet = 60;
+        EEPROM_WriteByte(EEPROM_SET_TEMP_ADDR, g_TempSet);
     }
-
-    onButton.prevState = 1;
+    
+    g_TempSetNew = g_TempSet;
+    
+    g_HeaterState = STATE_INIT;
+    g_SSDState = STATE_TEMP_DISPLAY;
+    g_UpButton.state = STATE_RELEASED;
+    g_DownButton.state = STATE_RELEASED;
+    g_OnButton.prevState = STATE_ON;
 }
 
 
@@ -68,18 +75,17 @@ void StateMachine_Run(void) {
     uint8_t idx = 0; // tempVals array index
     uint8_t tempAvg = 0; // Average of the last 10 readings
     uint8_t tempCur = 0; // Current temperature reading
-    int8_t tempDiff; // Up/Down buttons temperature difference to be updated
     
     while (1) {
 
-        if (onButton.state == STATE_ON) {
+        if (g_OnButton.state == STATE_ON) {
 
-            if (onButton.prevState == STATE_OFF) {
+            if (g_OnButton.prevState == STATE_OFF) {
                 StateMachine_OnWakeUp();
             }
 
             // ADC read temperature periodic routine
-            if (gFlagADCPeriod) {
+            if (g_FlagADCPeriod) {
 
                 // Subtract the tenth read before the current one
                 tempAccum -= tempVals[idx];
@@ -97,13 +103,13 @@ void StateMachine_Run(void) {
                 if (++idx > 9) // Increment array index
                     idx = 0; // Wrap the array index value on 10
 
-                gFlagADCPeriod = 0;
+                g_FlagADCPeriod = 0;
             }
 
-            tempDiff = StateMachine_Buttons();
+            StateMachine_Buttons();
             StateMachine_Heater(tempAvg);
             StateMachine_LED();
-            StateMachine_SSD(tempCur, gTempSet + tempDiff);
+            StateMachine_SSD(tempCur);
         }
         // The on button is off, turn off the device
         else {
@@ -114,27 +120,38 @@ void StateMachine_Run(void) {
     ASSERT(0);  // This should never be reached
 }
 
-
+void Heater_TransitToHeating(void) {
+    g_HeaterState = STATE_HEATING;
+    Heater_TurnOn();
+    g_HeaterLED.state = STATE_BLINK;
+}
+void Heater_TransitToCooling(void) {
+    g_HeaterState = STATE_COOLING;
+    Heater_TurnOff();
+    g_HeaterLED.state = STATE_ON;
+}
 void StateMachine_Heater(uint8_t tempAvg) {
 
-    switch (heaterState) {
+    switch (g_HeaterState) {
+        
+        case STATE_INIT:
+            if(tempAvg >= g_TempSet + 5) {
+                Heater_TransitToCooling();
+            }
+            else {
+                Heater_TransitToHeating();
+            }
 
         case STATE_HEATING:
-            if (tempAvg >= gTempSet + 5)
-                heaterState = STATE_COOLING;
-            else {
-                Heater_TurnOn();
-                heaterLED.state = STATE_BLINK;
+            if (tempAvg >= g_TempSet + 5) {
+                Heater_TransitToCooling();
             }
             break;
 
         case STATE_COOLING:
-            if (tempAvg <= gTempSet - 5)
-                heaterState = STATE_HEATING;
-            else {
-                Heater_TurnOff();
-                heaterLED.state = STATE_ON;
-            }
+            if (tempAvg <= g_TempSet - 5) {
+                Heater_TransitToHeating();
+            }   
             break;
 
         default:
@@ -144,11 +161,11 @@ void StateMachine_Heater(uint8_t tempAvg) {
 
 }
 
-void StateMachine_SSD(uint8_t tempCur, uint8_t gTempSetVar) {
+void StateMachine_SSD(uint8_t tempCur) {
 
     static uint8_t blinkState = STATE_SHOW; // Nested state inside STATE_TEMP_SET
 
-    switch (SSDState) {
+    switch (g_SSDState) {
 
         case STATE_TEMP_DISPLAY:
             SSD_Multiplex(tempCur); // Display the ADC temperature reading
@@ -158,18 +175,18 @@ void StateMachine_SSD(uint8_t tempCur, uint8_t gTempSetVar) {
             // Blink the seven segment display
             switch (blinkState) {
                 case STATE_SHOW:
-                    if (gFlagSSDBlink) {
+                    if (g_FlagSSDBlink) {
                         blinkState = STATE_HIDE;
                         SSD_PORT = 0;
-                        gFlagSSDBlink = 0;
+                        g_FlagSSDBlink = 0;
                     } else
-                        SSD_Multiplex(gTempSetVar);
+                        SSD_Multiplex(g_TempSetNew);
                     break;
 
                 case STATE_HIDE:
-                    if (gFlagSSDBlink) {
+                    if (g_FlagSSDBlink) {
                         blinkState = STATE_SHOW;
-                        gFlagSSDBlink = 0;
+                        g_FlagSSDBlink = 0;
                     }
                     break;
 
@@ -187,7 +204,7 @@ void StateMachine_SSD(uint8_t tempCur, uint8_t gTempSetVar) {
 
 void StateMachine_LED(void) {
 
-    switch (heaterLED.state) {
+    switch (g_HeaterLED.state) {
 
         case STATE_ON:
             HEATER_LED = 1;
@@ -198,9 +215,9 @@ void StateMachine_LED(void) {
             break;
 
         case STATE_BLINK:
-            if (heaterLED.timerFlag) {
+            if (g_HeaterLED.timerFlag) {
                 HEATER_LED ^= 1;
-                heaterLED.timerFlag = 0;
+                g_HeaterLED.timerFlag = 0;
             }
             break;
 
@@ -211,48 +228,46 @@ void StateMachine_LED(void) {
 
 }
 
-int8_t StateMachine_Buttons(void) {
-
-    static int8_t tempDiff = 0; // Holds the update amount of gTempSet value
+void StateMachine_Buttons(void) {
 
     // Up button task
-    switch (upButton.state) {
+    switch (g_UpButton.state) {
         case STATE_RELEASED:
             if (UP_BUTTON_IS_PRESSED()) {
-                upButton.state = STATE_DEBOUNCE;
-                upButton.timer = 0;
+                g_UpButton.state = STATE_DEBOUNCE;
+                g_UpButton.timer = 0;
             }
 
-            upButton.prevState = STATE_RELEASED;
+            g_UpButton.prevState = STATE_RELEASED;
             break;
 
         case STATE_PRESSED:
-            if (upButton.state != upButton.prevState) {
+            if (g_UpButton.state != g_UpButton.prevState) {
                 
-                if (SSDState == STATE_TEMP_DISPLAY)
-                    SSDState = STATE_TEMP_SET;
+                if (g_SSDState == STATE_TEMP_DISPLAY)
+                    g_SSDState = STATE_TEMP_SET;
                 else
-                    if (gTempSet + tempDiff < 75)
-                        tempDiff += 5;
+                    if (g_TempSetNew < 75)
+                        g_TempSetNew += 5;
             }
             if (UP_BUTTON_IS_RELEASED()) {
-                upButton.timer = 0;
-                upButton.state = STATE_DEBOUNCE;
+                g_UpButton.timer = 0;
+                g_UpButton.state = STATE_DEBOUNCE;
             }
 
-            upButton.prevState = STATE_PRESSED;
-            gButtonsTimer = 0;
+            g_UpButton.prevState = STATE_PRESSED;
+            g_ButtonsTimer = 0;
             break;
 
         case STATE_DEBOUNCE:
-            if (upButton.timer == DEBOUNCING_DELAY_MS) {
+            if (g_UpButton.timer == DEBOUNCING_DELAY_MS) {
 
-                if (upButton.prevState == STATE_RELEASED)
-                    upButton.state = STATE_PRESSED;
+                if (g_UpButton.prevState == STATE_RELEASED)
+                    g_UpButton.state = STATE_PRESSED;
                 else
-                    upButton.state = STATE_RELEASED;
+                    g_UpButton.state = STATE_RELEASED;
             }
-            gButtonsTimer = 0;
+            g_ButtonsTimer = 0;
             break;
 
         default:
@@ -261,43 +276,43 @@ int8_t StateMachine_Buttons(void) {
     }
 
     // Down button task
-    switch (downButton.state) {
+    switch (g_DownButton.state) {
         case STATE_RELEASED:
             if (DOWN_BUTTON_IS_PRESSED()) {
-                downButton.state = STATE_DEBOUNCE;
-                downButton.timer = 0;
+                g_DownButton.state = STATE_DEBOUNCE;
+                g_DownButton.timer = 0;
             }
 
-            downButton.prevState = STATE_RELEASED;
+            g_DownButton.prevState = STATE_RELEASED;
             break;
 
         case STATE_PRESSED:
-            if (downButton.state != downButton.prevState) {
+            if (g_DownButton.state != g_DownButton.prevState) {
                 
-                if (SSDState == STATE_TEMP_DISPLAY)
-                    SSDState = STATE_TEMP_SET;
+                if (g_SSDState == STATE_TEMP_DISPLAY)
+                    g_SSDState = STATE_TEMP_SET;
                 else
-                    if (gTempSet + tempDiff > 35)
-                        tempDiff -= 5;
+                    if (g_TempSetNew > 35)
+                        g_TempSetNew -= 5;
             }
             if (DOWN_BUTTON_IS_RELEASED()) {
-                downButton.state = STATE_DEBOUNCE;
-                downButton.timer = 0;
+                g_DownButton.state = STATE_DEBOUNCE;
+                g_DownButton.timer = 0;
             }
 
-            downButton.prevState = STATE_PRESSED;
-            gButtonsTimer = 0;
+            g_DownButton.prevState = STATE_PRESSED;
+            g_ButtonsTimer = 0;
             break;
 
         case STATE_DEBOUNCE:
-            if (downButton.timer == DEBOUNCING_DELAY_MS) {
+            if (g_DownButton.timer == DEBOUNCING_DELAY_MS) {
 
-                if (downButton.prevState == STATE_RELEASED)
-                    downButton.state = STATE_PRESSED;
+                if (g_DownButton.prevState == STATE_RELEASED)
+                    g_DownButton.state = STATE_PRESSED;
                 else
-                    downButton.state = STATE_RELEASED;
+                    g_DownButton.state = STATE_RELEASED;
             }
-            gButtonsTimer = 0;
+            g_ButtonsTimer = 0;
             break;
 
         default:
@@ -306,23 +321,21 @@ int8_t StateMachine_Buttons(void) {
     }
 
     // Update the gTempSet value after 5 seconds from releasing the buttons
-    if (gButtonsTimer >= 50 && SSDState == STATE_TEMP_SET) {
-        SSDState = STATE_TEMP_DISPLAY;
-        gTempSet += tempDiff;
-        tempDiff = 0;
-        EEPROM_WriteByte(EEPROM_SET_TEMP_ADDR, gTempSet);
-        gButtonsTimer = 0;
+    if (g_ButtonsTimer >= 50 && g_SSDState == STATE_TEMP_SET) {
+        g_SSDState = STATE_TEMP_DISPLAY;
+        g_TempSet = g_TempSetNew;
+        EEPROM_WriteByte(EEPROM_SET_TEMP_ADDR, g_TempSet);
+        g_ButtonsTimer = 0;
     }
 
-    return tempDiff;
 }
 
 void INTB0_ISR(void) {
 
-    if (onButton.state) {
-        onButton.state = 0;
+    if (g_OnButton.state) {
+        g_OnButton.state = 0;
     } else {
-        onButton.state = 1;
+        g_OnButton.state = 1;
     }
 
     // Clear the interrupt flag

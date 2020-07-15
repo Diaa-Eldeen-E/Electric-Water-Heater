@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 typedef enum {
+    STATE_INIT,
     STATE_HEATING,
     STATE_COOLING
         
@@ -56,9 +57,9 @@ void StateMachine_TurnOff(void);
 void StateMachine_OnWakeUp(void);
 void StateMachine_Run(void);
 void StateMachine_Heater(uint8_t tempAvg);
-void StateMachine_SSD(uint8_t tempCur, uint8_t tempSetVar);
+void StateMachine_SSD(uint8_t tempCur);
 void StateMachine_LED(void);
-int8_t StateMachine_Buttons(void);
+void StateMachine_Buttons(void);
 void INTB0_ISR(void);
 
 

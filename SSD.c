@@ -60,7 +60,7 @@
 const unsigned char SEGMENT_MAP[10] = {0x3F, 0x06, 0x5B, 0x4F, 0x66,
     0x6D, 0x7D, 0x07, 0x7F, 0x6F};
 
-extern volatile uint8_t gTickMS;
+extern volatile uint8_t g_msTicks;
 
 
 //*****************************************************************************
@@ -123,7 +123,7 @@ void SSD_Multiplex(uint8_t num) {
     static int8_t prevTime = -MULTIPLEX_TIME_PERIOD; 
     static uint8_t state = STATE_ONES_DIGIT; // Used to indicate which SSD is on
 
-    if ((int8_t) gTickMS - prevTime >= MULTIPLEX_TIME_PERIOD) {
+    if ((int8_t) g_msTicks - prevTime >= MULTIPLEX_TIME_PERIOD) {
         
         // Switch 7-segment displays
         if (state == STATE_TENS_DIGIT) {
@@ -144,8 +144,8 @@ void SSD_Multiplex(uint8_t num) {
             ASSERT(0);
         }
 
-        prevTime = gTickMS;
-        // The gTickMS counter variable resets at 100
+        prevTime = g_msTicks;
+        // The g_msTicks counter variable resets at 100
         if (prevTime >= (100 - MULTIPLEX_TIME_PERIOD))
             prevTime = -MULTIPLEX_TIME_PERIOD;
     }
