@@ -62,13 +62,13 @@
  */
 void EEPROM_WriteByte(uint8_t address, uint8_t data) {
 
-    I2C_masterStart();
-    while (I2C_masterWrite(EEPROM_DEVICE_ADDR)) //7 bit address + Write
-        I2C_masterRepeatedStart();
+    I2C_Start();
+    while (I2C_Write(EEPROM_DEVICE_ADDR)) //7 bit address + Write
+        I2C_RepeatedStart();
 
-    I2C_masterWrite((uint8_t) address);
-    I2C_masterWrite(data);
-    I2C_masterStop();
+    I2C_Write((uint8_t) address);
+    I2C_Write(data);
+    I2C_Stop();
 }
 
 
@@ -86,16 +86,16 @@ void EEPROM_WriteByte(uint8_t address, uint8_t data) {
 uint8_t EEPROM_ReadByte(uint8_t address) {
 
     uint8_t data = 0;
-    I2C_masterStart();
-    while (I2C_masterWrite(EEPROM_DEVICE_ADDR)) //7 bit address + Write
-        I2C_masterRepeatedStart();
+    I2C_Start();
+    while (I2C_Write(EEPROM_DEVICE_ADDR)) //7 bit address + Write
+        I2C_RepeatedStart();
 
-    I2C_masterWrite((uint8_t) address); // Read address
+    I2C_Write((uint8_t) address); // Read address
 
-    I2C_masterStart(); // Repeated start
-    I2C_masterWrite(EEPROM_DEVICE_ADDR + 1); //7 bit address + Read
-    data = I2C_masterRead(0);
-    I2C_masterStop();
+    I2C_Start(); // Repeated start
+    I2C_Write(EEPROM_DEVICE_ADDR + 1); //7 bit address + Read
+    data = I2C_Read(0);
+    I2C_Stop();
 
     return data;
 }

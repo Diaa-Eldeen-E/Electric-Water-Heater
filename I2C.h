@@ -17,13 +17,13 @@ extern "C" {
 
 
     
-void I2C_masterInitialize(void);
-void I2C_masterWait(void);
-void I2C_masterStart(void);
-void I2C_masterRepeatedStart(void);
-void I2C_masterStop(void);
-uint8_t I2C_masterWrite(uint8_t data);
-uint8_t I2C_masterRead(uint8_t ack);
+void I2C_Initialize(void);
+void I2C_Wait(void);
+void I2C_Start(void);
+void I2C_RepeatedStart(void);
+void I2C_Stop(void);
+uint8_t I2C_Write(uint8_t data);
+uint8_t I2C_Read(uint8_t ack);
 
 
 
