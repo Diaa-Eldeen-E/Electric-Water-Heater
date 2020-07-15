@@ -1,36 +1,91 @@
 /*
- * File:   timer.c
- * Author: Diaa Eldeen
+ * Filename:     timer.c
+ * Compiler:     XC8
+ * Target:       PIC16F877A
  *
- * Created on July 5, 2020, 7:26 AM
+ * MIT License 
+ *
+ * Copyright (c) 2020 - Diaa Eldeen
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
  */
 
+/******************************************************************************
+ * @file    timer.c
+ * @brief   Timer peripheral driver implementation
+ * @author  Diaa Eldeen
+ * @date    July 5, 2020
+ ******************************************************************************/
+ 
+ 
+/** 
+ * @addtogroup Timer
+ * @{
+ */
+
+
+//*****************************************************************************
+//                                   Includes
+//*****************************************************************************
 #include "timer.h"
 #include "IO.h"
 
-volatile uint8_t gTickMS = 0; // Count timer millisecond ticks
-volatile uint8_t gTick100MS = 0; // Count quarter seconds
-volatile uint8_t gButtonsTimer = 0;  // 100 millisecond counts
 
-volatile uint8_t gFlagSSDBlink;
-volatile uint8_t gFlagADCPeriod;
+//*****************************************************************************
+// Variables
+//*****************************************************************************
+volatile uint8_t gTickMS = 0; ///< The timer's millisecond ticks
+volatile uint8_t gTick100MS = 0; ///< The timer's hundred millisecond ticks
+volatile uint8_t gButtonsTimer = 0; ///< 100 milliseconds counter used by buttons
+
+volatile uint8_t gFlagSSDBlink; ///< 500MS time event used for blinking the SSD
+volatile uint8_t gFlagADCPeriod;    ///< 100MS time event for ADC read routine
 
 extern button_t upButton;
 extern button_t downButton;
 extern LED_t heaterLED;
 
-static uint8_t timer0ReloadVal;
+static uint8_t timer0ReloadVal; ///< Reload value for 1 millisecond inetrrupt
 
+
+//*****************************************************************************
+// Function Definitions
+//*****************************************************************************
+/**
+ * @brief   Initialize timer0 peripheral.
+ * Initializes the 8-bit timer (timer0), sets it's period to 1 millisecond
+ * and enables the overflow interrupt.
+ * 
+ * @param   none.
+ * @return  none.
+ * @note    #_XTAL_FREQ must be running at 16MHz clock.
+ */
 void Timer0_Initialize(void) {
-    // Set TMR0 to the options selected in the User Interface
 
-    // PSA assigned; PS 1:16,  mask the nWPUEN and INTEDG bits
+    // Mask the nWPUEN and INTEDG bits and set Prescaler to 1:16,  
     OPTION_REG = (uint8_t) ((OPTION_REG & 0xC0) | (0x03 & 0x3F));
 
-    // Load the TMR value to reload variable
-    TMR0 = 0x6;
+    // Load the TMR with the reload variable for an interrupt every 1 ms
     timer0ReloadVal = 6;
-
+    TMR0 = timer0ReloadVal;
+    
     // Clear Interrupt flag before enabling the interrupt
     INTCONbits.TMR0IF = 0;
 
@@ -38,8 +93,16 @@ void Timer0_Initialize(void) {
     INTCONbits.TMR0IE = 1;
 }
 
-
-// A timer interrupt counts gTickMS
+/**
+ * @brief   Timer0 ISR used for timed events.
+ * Counts the time in #gTickMS, #gTick100MS, #gButtonsTimer, #upButton and
+ * #downButton timers.
+ * Also triggers time events by setting some flags #gFlagADCPeriod
+ * #gFlagSSDBlink and #heaterLED timer flag.
+ * 
+ * @param   none.
+ * @return  none.
+ */
 void Timer0_ISR(void) {
 
     // Clear the TMR0 interrupt flag
