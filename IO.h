@@ -21,8 +21,8 @@ extern "C" {
 #endif
 
 
-#define STATUS_LED_TRIS TRISBbits.TRISB3
-#define STATUS_LED      PORTBbits.RB3
+#define HEATER_LED_TRIS TRISBbits.TRISB3
+#define HEATER_LED      PORTBbits.RB3
 
 #define DOWN_BUTTON PORTBbits.RB1
 #define DOWN_BUTTON_IS_PRESSED()  (DOWN_BUTTON == 0)
@@ -36,31 +36,23 @@ extern "C" {
     
 
 
-    // LED states
-#define STATE_INIT  0
-#define STATE_ON    1
-#define STATE_OFF   2
-#define STATE_BLINK 3
 
-    // Button states
-#define STATE_PRESSED   0
-#define STATE_RELEASED  1
-#define STATE_DEBOUNCE  2
 
-    typedef struct led_t {
+    typedef struct LED_t {
         uint8_t state;
         volatile uint8_t timerFlag;
-    } led_t;
+    } LED_t;
 
     typedef struct button_t {
-        uint8_t state;
+        volatile uint8_t state;
         uint8_t prevState;
         volatile uint8_t timer;
     } button_t;
 
-    void ledInit(void);
-    void buttonsInit(void);
-    void INTB0_ISR(void);
+    void IO_Initialize(void);
+    static void LED_Initialize(void);
+    static void Buttons_Initialize(void);
+    
 
 
 #ifdef __cplusplus  // Provide C++ Compatibility
