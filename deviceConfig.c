@@ -6,7 +6,7 @@
  */
 
 
-#include "device_config.h"
+#include "deviceConfig.h"
 
 
 // PIC16F877A Configuration Bit Settings
