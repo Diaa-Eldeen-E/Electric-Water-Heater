@@ -8,20 +8,20 @@
 #include "timer.h"
 #include "IO.h"
 
-volatile uint8_t ms = 0; // Count ms
-volatile uint8_t ms100 = 0; // Count quarter seconds
-volatile uint8_t buttonsTimer = 0;
-uint8_t timer0ReloadVal;
+volatile uint8_t gTickMS = 0; // Count timer millisecond ticks
+volatile uint8_t gTick100MS = 0; // Count quarter seconds
+volatile uint8_t gButtonsTimer = 0;  // 100 millisecond counts
 
-
-volatile uint8_t flag500MS1;
-volatile uint8_t flag500MS2;
-volatile uint8_t flag100MS;
+volatile uint8_t gFlagSSDBlink;
+volatile uint8_t gFlagADCPeriod;
 
 extern button_t upButton;
 extern button_t downButton;
+extern LED_t heaterLED;
 
-void TMR0_Initialize(void) {
+static uint8_t timer0ReloadVal;
+
+void Timer0_Initialize(void) {
     // Set TMR0 to the options selected in the User Interface
 
     // PSA assigned; PS 1:16,  mask the nWPUEN and INTEDG bits
@@ -39,31 +39,31 @@ void TMR0_Initialize(void) {
 }
 
 
-// A timer interrupt counts ms
-void TMR0_ISR(void) {
+// A timer interrupt counts gTickMS
+void Timer0_ISR(void) {
 
     // Clear the TMR0 interrupt flag
     INTCONbits.TMR0IF = 0;
 
     TMR0 = timer0ReloadVal;
 
-    if(ms == 100) {
+    if(gTickMS == 100) {    // 100 MS
         
-        flag100MS = 1;
-        ms = 0;
-        ms100++;
-        buttonsTimer++;
+        gFlagADCPeriod = 1;
+        gTick100MS++;
+        gButtonsTimer++;
+        gTickMS = 0;        // Wrap around 100 milliseconds
         
-        if(ms100 == 200)    
-            ms100 = 0;
+        if(gTick100MS == 200)    // Wrap around 20 seconds
+            gTick100MS = 0;
         
-        if(ms100 % 5 == 0) {
-            flag500MS1 = 1;
-            flag500MS2 = 1;
+        if(gTick100MS % 5 == 0) {   // 500 milliseconds flag
+            heaterLED.timerFlag = 1;
+            gFlagSSDBlink = 1;
         }
 
     }
-    ms++;
+    gTickMS++;
     upButton.timer++;
     downButton.timer++;
         
