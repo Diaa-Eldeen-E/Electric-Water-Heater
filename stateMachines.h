@@ -11,26 +11,51 @@
 #include "IO.h"
 #include "SSD.h"
 #include "EEPROM.h"
+#include "heater.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-    
-#define STATE_HEATING   0
-#define STATE_COOLING   1
-    
-#define STATE_TEMP_SET      0
-#define STATE_TEMP_DISPLAY  1
-#define STATE_SHOW          2
-#define STATE_HIDE          3
-    
+typedef enum {
+    STATE_HEATING,
+    STATE_COOLING
+        
+}HeaterState_t;
 
-    
-void stateMachine_heater(uint8_t tempAvg);
-void SSD_task(uint8_t tempCur, uint8_t tempSetVar);
-void stateMachine_LED(void);
-int8_t buttonsUpDown_Task();
+
+typedef enum {
+    STATE_TEMP_SET,
+    STATE_TEMP_DISPLAY
+}SSDState_t;   
+
+typedef enum {
+    STATE_SHOW,
+    STATE_HIDE
+}SSDBlinkState_t;  
+
+
+typedef enum {
+    STATE_OFF = 0,
+    STATE_ON = 1,
+    STATE_BLINK        
+}LEDState_t;  
+
+
+typedef enum {
+    STATE_PRESSED = 0,
+    STATE_RELEASED = 1,
+    STATE_DEBOUNCE        
+}ButtonState_t;  
+
+
+
+void StateMachine_Initialize(void);
+void StateMachine_Heater(uint8_t tempAvg);
+void StateMachine_SSD(uint8_t tempCur, uint8_t tempSetVar);
+void StateMachine_LED(void);
+int8_t StateMachine_Buttons(void);
+void INTB0_ISR(void);
 
 
 #ifdef	__cplusplus
