@@ -9,7 +9,7 @@
 #define	IO_H
 
 
-#include "device_config.h"
+#include "deviceConfig.h"
 
 #include "xc.h"
 #include <pic16f877a.h>
@@ -21,14 +21,14 @@ extern "C" {
 #endif
 
 
-#define HEATER_LED_TRIS TRISBbits.TRISB3
-#define HEATER_LED      PORTBbits.RB3
+#define HEATER_LED_TRIS TRISB3
+#define HEATER_LED      RB3
 
-#define DOWN_BUTTON PORTBbits.RB1
+#define DOWN_BUTTON     RB1
 #define DOWN_BUTTON_IS_PRESSED()  (DOWN_BUTTON == 0)
 #define DOWN_BUTTON_IS_RELEASED()  (DOWN_BUTTON == 1)
 
-#define UP_BUTTON   PORTBbits.RB2
+#define UP_BUTTON       RB2
 #define UP_BUTTON_IS_PRESSED()  (UP_BUTTON == 0)
 #define UP_BUTTON_IS_RELEASED()  (UP_BUTTON == 1)
 
