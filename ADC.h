@@ -1,218 +1,81 @@
-/**
-  ADC Driver API Header File
+/*
+ * Filename:     ADC.h
+ * Compiler:     XC8
+ * Target:       PIC16F877A
+ *
+ * MIT License 
+ *
+ * Copyright (c) 2020 - Diaa Eldeen
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
 
-  @author
-    Diaa Eldeen
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
 
-  @file
-    ADC.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
-  @brief
-    This header file provides APIs for driver for ADC.
+/******************************************************************************
+ * @file    ADC.h
+ * @brief   ADC peripheral driver interface
+ * @author  Diaa Eldeen
+ * @date    July 6, 2020
+ ******************************************************************************/
  
-*/
+ 
+/** 
+ * @addtogroup ADC
+ * @{
+ */
 
 
 
 #ifndef ADC_H
 #define ADC_H
 
-/**
-  Section: Included Files
-*/
-
-#include <xc.h>
-#include <stdint.h>
-#include <stdbool.h>
-
 
 #ifdef __cplusplus  // Provide C++ Compatibility
 extern "C" {
 #endif
 
-#define ADC_CHANNEL 2
+    
+//*****************************************************************************
+// Includes
+//*****************************************************************************
+#include <xc.h>
+#include <stdint.h>    
+    
+    
+//*****************************************************************************
+// Preprocessor Macros and Constants
+//*****************************************************************************
+/**
+ * The MCU ADC channel number to be initialized and read using this API.
+ * This is the number of the ADC channel that is connected to the temperature 
+ * sensor.
+ */    
+#define ADC_CHANNEL 2   
         
-/**
-  Section: Data Types Definitions
-*/
-
-/**
- *  result size of an A/D conversion
- */
-
-typedef uint16_t adc_result_t;
-
-
-/**
-  Section: Macros
-*/
-
-/**
-  @Summary
-    Starts conversion
-
-  @Description
-    This routine is used to start conversion of desired channel.
+#define ADC_CHANNEL_PIN_TRIS TRISA2 ///< TRIS bit for that channel pin
     
-  @Preconditions
-    ADC_Initialize() function should have been called before calling this function.
-
-  @Returns
-    None
-
-  @Param
-    None
-
-  @Example
-    <code>
-    uint16_t convertedValue;
-
-    ADC_Initialize();    
-    ADC_StartConversion();
-    convertedValue = ADC_GetConversionResult();
-    </code>
-*/
-#define ADC_startConversion() ADCON0bits.GO_nDONE = 1
-
-
-
-/**
-  @Summary
-    Returns true when the conversion is completed otherwise false.
-
-  @Description
-    This routine is used to determine if conversion is completed.
-    When conversion is complete routine returns true. It returns false otherwise.
-
-  @Preconditions
-    ADC_Initialize() and ADC_StartConversion(void)
-    function should have been called before calling this function.
-
-  @Returns
-    true  - If conversion is complete
-    false - If conversion is not completed
-
-  @Param
-    None
-
-  @Example
-    <code>
-    uint16_t convertedValue;
-
-    ADC_Initialize();
-    ADC_StartConversion();
-
-    while(!ADC_IsConversionDone());
-    convertedValue = ADC_GetConversionResult();
-    </code>
- */
-#define ADC_isConversionDone() (!ADCON0bits.GO_nDONE)
-
-
-/**
-  @Summary
-    Returns the ADC conversion value.
-
-  @Description
-    This routine is used to get the analog to digital converted value. This
-    routine gets converted values from the channel specified.
-
-  @Preconditions
-    This routine returns the conversion value only after the conversion is complete.
-    Completion status can be checked using
-    ADC_IsConversionDone() routine.
-
-  @Returns
-    Returns the converted value.
-
-  @Param
-    None
-
-  @Example
-    <code>
-    uint16_t convertedValue;
-
-    ADC_Initialize();
-    ADC_StartConversion();
-
-    while(ADC_IsConversionDone());
-
-    convertedValue = ADC_GetConversionResult();
-    </code>
- */
-#define ADC_getConversionResult() ((adc_result_t)((ADRESH << 8) + ADRESL))
-
-
-/**
-  Section: ADC Module APIs
-*/
-
-/**
-  @Summary
-    Initializes the ADC
-
-  @Description
-    This routine initializes the Initializes the ADC.
-    This routine must be called before any other ADC routine is called.
-    This routine should only be called once during system initialization.
-
-  @Preconditions
-    None
-
-  @Param
-    None
-
-  @Returns
-    None
-
-  @Comment
-    
-
-  @Example
-    <code>
-    uint16_t convertedValue;
-
-    ADC_Initialize();
-    convertedValue = ADC_GetConversionResult();
-    </code>
-*/
-void ADC_initialize(void);
-
-
-
-/**
-  @Summary
-    Returns the ADC conversion value
-    also allows selection of a channel for conversion.
-
-  @Description
-    This routine is used to select desired channel for conversion
-    and to get the analog to digital converted value.
-
-  @Preconditions
-    ADC_Initialize() function should have been called before calling this function.
-
-  @Returns
-    Returns the converted value.
-
-  @Param
-    Pass in required channel number.
-    "For available channel refer to enum under adc.h file"
-
-  @Example
-    <code>
-    uint16_t convertedValue;
-
-    ADC_Initialize();
-
-    conversion = ADC_GetConversion(AN1_Channel);
-    </code>
-*/
-adc_result_t ADC_getConversion(void);
-
-
-
-uint8_t ADC_readTemp(void);
+//*****************************************************************************
+// Function Prototypes
+//*****************************************************************************
+void ADC_Initialize(void);
+uint16_t ADC_ReadChannel(void);
+uint8_t ADC_ReadTemperature(void);
 
 
 #ifdef __cplusplus  // Provide C++ Compatibility

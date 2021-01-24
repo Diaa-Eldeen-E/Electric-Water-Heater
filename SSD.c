@@ -47,11 +47,6 @@
 
 
 //*****************************************************************************
-// Preprocessor Constants
-//*****************************************************************************
-#define MULTIPLEX_TIME_PERIOD   10  ///< Multiplexing SSDs time period in MS
-
-//*****************************************************************************
 // Variables
 //*****************************************************************************
 /**
@@ -60,7 +55,6 @@
 const unsigned char SEGMENT_MAP[10] = {0x3F, 0x06, 0x5B, 0x4F, 0x66,
     0x6D, 0x7D, 0x07, 0x7F, 0x6F};
 
-extern volatile uint8_t g_msTicks;
 
 
 //*****************************************************************************
@@ -68,19 +62,39 @@ extern volatile uint8_t g_msTicks;
 //*****************************************************************************
 
 /**
- * @brief   Print a digit number on the 7-segment display.
+ * @brief   Print a digit number on a 7-segment display.
  * 
- * Prints a decimal digit (0 to 9) on the 7-segment display via an 8-bit
- * parallel port.
+ * Prints a decimal digit (0 to 9) on either the ones 7-segment display or the
+ * tens 7-segment display.
  * 
+ * @param   unit  7-segment display selection (#ONES or #TENS).
  * @param   digit The decimal digit to be printed on the 7-segment display.
  * @return  none.
- * @note    #SSD_PORT Must be previously defined with the register that controls
- *          the MCU port connected to the 7-segment display. 
+ * @note    #SSD_PORT, #SSD_ONES and #SSD_TENS must be previously defined with
+ *          the appropriate settings corresponding to the connected hardware.
  */
-void SSD_Print(uint8_t digit) {
+void SSD_Print(unit_t unit, uint8_t digit) {
+    
     ASSERT(digit <= 9);
+    
     SSD_PORT = SEGMENT_MAP[digit];
+    
+    switch(unit) {
+        case ONES:
+            SSD_ONES = 1;
+            SSD_TENS = 0;
+            break;
+            
+        case TENS:
+            SSD_TENS = 1;
+            SSD_ONES = 0;
+            break;
+            
+        default:
+            ASSERT(0);
+            break;
+    }
+
 }
 
 /**
@@ -106,48 +120,3 @@ void SSD_Initialize(void) {
     SSD_TENS = 0;
 }
 
-/**
- * @brief   Display 2 digit number on the 7-segment displays.
- * 
- * Multiplexes two 7-segment displays for displaying a 2 digit number.
- * 
- * @param   num The 2-digits number to be printed on the 7-segment displays.
- * @return  none.
- * @note    #SSD_PORT, #SSD_ONES and #SSD_TENS must be previously defined with
- *          the appropriate settings corresponding to the connected hardware.
- */
-void SSD_Multiplex(uint8_t num) {
-
-    ASSERT(num <= 99);
-
-    static int8_t prevTime = -MULTIPLEX_TIME_PERIOD; 
-    static uint8_t state = STATE_ONES_DIGIT; // Used to indicate which SSD is on
-
-    if ((int8_t) g_msTicks - prevTime >= MULTIPLEX_TIME_PERIOD) {
-        
-        // Switch 7-segment displays
-        if (state == STATE_TENS_DIGIT) {
-
-            SSD_PORT = SEGMENT_MAP[num % 10]; // Extract ones digit from count
-            SSD_TENS = 1;
-            SSD_ONES = 0;
-            state = STATE_ONES_DIGIT;
-        }
-        else if (state == STATE_ONES_DIGIT) {
-            
-            SSD_PORT = SEGMENT_MAP[num / 10]; // Extract tens digit from count
-            SSD_ONES = 1;
-            SSD_TENS = 0;
-            state = STATE_TENS_DIGIT;
-        } 
-        else {
-            ASSERT(0);
-        }
-
-        prevTime = g_msTicks;
-        // The g_msTicks counter variable resets at 100
-        if (prevTime >= (100 - MULTIPLEX_TIME_PERIOD))
-            prevTime = -MULTIPLEX_TIME_PERIOD;
-    }
-
-}

@@ -33,11 +33,12 @@
 #include <xc.h>
 #include <stdint.h>
 
-#include "stateMachines.h"
+#include "stateMachine.h"
 
 
 void main(void) {
 
+    // System initialization
     Timer0_Initialize();
     ADC_Initialize();
     IO_Initialize();
@@ -45,13 +46,16 @@ void main(void) {
     I2C_Initialize();
     Heater_Initialize();
     StateMachine_Initialize();
-    INTCONbits.GIE = 1; // Enable global interrupts
+    
+    // Enable global interrupts
+    INTCONbits.GIE = 1; 
     
 
     StateMachine_Run();
 
     return;
 }
+
 
 void __interrupt() INTERRUPT_InterruptManager(void) {
 

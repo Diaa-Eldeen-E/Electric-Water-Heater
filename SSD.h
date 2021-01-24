@@ -36,7 +36,7 @@
  
  
 /** 
- * @ingroup SSD
+ * @addtogroup SSD
  * @{
  */
 
@@ -64,33 +64,30 @@ extern "C" {
 #define SSD_TRIS    TRISD   ///< 7-segment display data port TRIS register
 #define SSD_PORT    PORTD   ///< 7-segment display data port PORT register
     
-#define SSD_ONES    RA4  ///< Ones digit 7-segment display control bit
-#define SSD_TENS    RA5  ///< Tens digit 7-segment display control bit
+#define SSD_TENS    RA4  ///< Ones digit 7-segment display control bit
+#define SSD_ONES    RA5  ///< Tens digit 7-segment display control bit
 
-#define SSD_ONES_TRIS   TRISA4 ///< Ones digit 7-segment display control TRIS bit
-#define SSD_TENS_TRIS   TRISA5 ///< Tens digit 7-segment display control TRIS bit
+#define SSD_TENS_TRIS   TRISA4 ///< Ones digit 7-segment display control TRIS bit
+#define SSD_ONES_TRIS   TRISA5 ///< Tens digit 7-segment display control TRIS bit
 
     
 //*****************************************************************************
 // Typedefs
 //*****************************************************************************
 /**
- * @brief   7-segment displays multiplexing states.
- * A single 7-segment display can be operating at any given time, thus each
- * operating 7-segment display corresponds to a state.
+ * @brief   Available 7-segment displays digits.
  */
 typedef enum {
-    STATE_ONES_DIGIT,
-    STATE_TENS_DIGIT        
-}SSDMultiplexState_t;     
+    ONES,   ///< Selects the ones 7-segment display when passed to SSD_Print()
+    TENS    ///< Selects the tens 7-segment display when passed to SSD_Print()
+}unit_t;    
 
     
 //*****************************************************************************
 // Function Prototypes
 //*****************************************************************************
-void SSD_Print(uint8_t digit);
+void SSD_Print(unit_t unit, uint8_t digit);
 void SSD_Initialize(void);
-void SSD_Multiplex(uint8_t num);
 
 
 
