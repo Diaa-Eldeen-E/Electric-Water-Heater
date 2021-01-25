@@ -1,0 +1,7 @@
+<map id="I2C.h" name="I2C.h">
+<area shape="rect" id="node1" title="I2C peripheral driver interface." alt="" coords="87,5,139,32"/>
+<area shape="rect" id="node2" href="$_e_e_p_r_o_m_8h.html" title="EEPROM device driver interface." alt="" coords="68,80,159,107"/>
+<area shape="rect" id="node3" href="$_e_e_p_r_o_m_8c.html" title="EEPROM device driver implementation." alt="" coords="5,155,96,181"/>
+<area shape="rect" id="node4" href="$state_machine_8h.html" title="Application state machine design." alt="" coords="121,155,231,181"/>
+<area shape="rect" id="node5" href="$state_machine_8c.html" title="Electric water heater state machine implementation." alt="" coords="121,229,231,256"/>
+</map>

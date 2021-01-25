@@ -1,0 +1,8 @@
+<map id="IO.h" name="IO.h">
+<area shape="rect" id="node1" title="LED and buttons device driver interface." alt="" coords="67,5,113,32"/>
+<area shape="rect" id="node2" href="$_i_o_8c.html" title="LED and buttons device driver implementation." alt="" coords="5,80,52,107"/>
+<area shape="rect" id="node3" href="$state_machine_8h.html" title="Application state machine design." alt="" coords="35,155,145,181"/>
+<area shape="rect" id="node5" href="$timer_8h.html" title="Timer peripheral driver interface." alt="" coords="128,80,191,107"/>
+<area shape="rect" id="node4" href="$state_machine_8c.html" title="Electric water heater state machine implementation." alt="" coords="35,229,145,256"/>
+<area shape="rect" id="node6" href="$timer_8c.html" title="Timer peripheral driver implementation." alt="" coords="169,155,232,181"/>
+</map>

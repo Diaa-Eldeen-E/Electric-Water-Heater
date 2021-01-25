@@ -1,0 +1,8 @@
+<map id="EEPROM.c" name="EEPROM.c">
+<area shape="rect" id="node1" title="EEPROM device driver implementation." alt="" coords="63,5,154,32"/>
+<area shape="rect" id="node2" href="$_e_e_p_r_o_m_8h.html" title="EEPROM device driver interface." alt="" coords="63,80,154,107"/>
+<area shape="rect" id="node3" href="$_i2_c_8h.html" title="I2C peripheral driver interface." alt="" coords="83,155,135,181"/>
+<area shape="rect" id="node4" title=" " alt="" coords="5,229,52,256"/>
+<area shape="rect" id="node5" title=" " alt="" coords="76,229,141,256"/>
+<area shape="rect" id="node6" href="$device_config_8h.html" title="Device and application specific Configuration." alt="" coords="165,229,271,256"/>
+</map>

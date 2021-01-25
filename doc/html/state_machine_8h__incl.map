@@ -1,0 +1,13 @@
+<map id="stateMachine.h" name="stateMachine.h">
+<area shape="rect" id="node1" title="Application state machine design." alt="" coords="159,5,269,32"/>
+<area shape="rect" id="node2" href="$_i_o_8h.html" title="LED and buttons device driver interface." alt="" coords="168,155,215,181"/>
+<area shape="rect" id="node6" href="$_s_s_d_8h.html" title="7&#45;Segment display device driver interface" alt="" coords="8,155,68,181"/>
+<area shape="rect" id="node7" href="$_e_e_p_r_o_m_8h.html" title="EEPROM device driver interface." alt="" coords="33,80,123,107"/>
+<area shape="rect" id="node9" href="$heater_8h.html" title="Heater device driver interface." alt="" coords="337,80,406,107"/>
+<area shape="rect" id="node10" href="$_a_d_c_8h.html" title="ADC peripheral driver interface." alt="" coords="239,155,299,181"/>
+<area shape="rect" id="node11" href="$timer_8h.html" title="Timer peripheral driver interface." alt="" coords="148,80,211,107"/>
+<area shape="rect" id="node3" title=" " alt="" coords="224,229,271,256"/>
+<area shape="rect" id="node4" title=" " alt="" coords="135,229,200,256"/>
+<area shape="rect" id="node5" href="$device_config_8h.html" title="Device and application specific Configuration." alt="" coords="5,229,111,256"/>
+<area shape="rect" id="node8" href="$_i2_c_8h.html" title="I2C peripheral driver interface." alt="" coords="92,155,144,181"/>
+</map>
