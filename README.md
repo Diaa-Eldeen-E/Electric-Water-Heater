@@ -15,4 +15,4 @@ Project specifications can be found
 &nbsp;
 
 Full doxygen documentation can be found 
-[Here](https://github.com/diaa3007/Electric-Water-Heater/blob/master/doc/html/).
+[Here](https://diaa-eldeen-e.github.io/Electric-Water-Heater/index.html).
